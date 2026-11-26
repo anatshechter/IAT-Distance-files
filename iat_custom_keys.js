@@ -62,12 +62,16 @@ define(['pipAPI', 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/qualt
         rightKeyText : 'Press "' + g.right.toUpperCase() + '" for'
     });
 
-    /* 3. Rewrite the keys that are actually RECORDED. quiat9.js puts
-          key:'e' (handle 'left') and key:'i' (handle 'right') in the
-          `sort` input array. Find those two inputs in the built script
-          and set their key to the assigned pair. */
+    /* 3. Rewrite what is RECORDED and what the instructions SAY.
+          - response inputs: key:'e'/'i' in the `sort` set -> assigned keys
+          - instruction text: <b>E</b>/<b>I</b> -> assigned keys (uppercase) */
     (function remap(root, leftKey, rightKey){
         var seen = (typeof WeakSet !== 'undefined') ? new WeakSet() : null;
+        var boldL = '<b>' + leftKey.toUpperCase()  + '</b>';
+        var boldR = '<b>' + rightKey.toUpperCase() + '</b>';
+        function fixStr(s){
+            return s.split('<b>E</b>').join(boldL).split('<b>I</b>').join(boldR);
+        }
         function walk(obj){
             if (!obj || typeof obj !== 'object') return;
             if (seen){ if (seen.has(obj)) return; seen.add(obj); }
@@ -75,9 +79,16 @@ define(['pipAPI', 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/qualt
                 obj.key = (obj.handle === 'left') ? leftKey : rightKey;
             }
             if (Array.isArray(obj)){
-                for (var i = 0; i < obj.length; i++) walk(obj[i]);
+                for (var i = 0; i < obj.length; i++){
+                    if (typeof obj[i] === 'string') obj[i] = fixStr(obj[i]);
+                    else walk(obj[i]);
+                }
             } else {
-                for (var k in obj){ if (Object.prototype.hasOwnProperty.call(obj, k)) walk(obj[k]); }
+                for (var k in obj){
+                    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
+                    if (typeof obj[k] === 'string') obj[k] = fixStr(obj[k]);
+                    else walk(obj[k]);
+                }
             }
         }
         walk(root);
