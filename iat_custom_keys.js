@@ -10,8 +10,9 @@ define(['pipAPI', 'https://cdn.jsdelivr.net/gh/baranan/minno-tasks@0.*/IAT/qualt
         { name: 'QP', left: 'q', right: 'p' }
     ];
 
-    var g = KEY_GROUPS[Math.floor(Math.random() * KEY_GROUPS.length)];
-
+    // read the group assigned by Qualtrics (falls back to EI if missing)
+    var assigned = (typeof window !== 'undefined' && window.IAT_KEYGROUP) ? String(window.IAT_KEYGROUP).toUpperCase() : '';
+    var g = KEY_GROUPS.filter(function (x){ return x.name === assigned; })[0] || KEY_GROUPS[0];
     // expose the assigned group so Qualtrics can store it
     try { window.IAT_KEYGROUP = g.name; } catch (e) {}
 
